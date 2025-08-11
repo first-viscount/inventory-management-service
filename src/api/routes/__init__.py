@@ -1,0 +1,1 @@
+"""API routes for the inventory management service."""

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  inventory-management-service:
+    build:
+      context: .
+      target: development
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://inventory_user:inventory_dev_password@postgres:5432/inventory_db
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=development
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8083 --reload --log-level debug

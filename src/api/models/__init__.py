@@ -1,0 +1,1 @@
+"""API models for the inventory management service."""
