@@ -1,12 +1,13 @@
 """Test inventory management endpoints."""
 
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_inventory(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_create_inventory(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test creating a new inventory record."""
     # Create location first
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -18,7 +19,7 @@ async def test_create_inventory(client: AsyncClient, sample_location_data, sampl
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     response = await client.post("/api/v1/inventory", json=inventory_data)
@@ -34,13 +35,13 @@ async def test_create_inventory(client: AsyncClient, sample_location_data, sampl
 
 
 @pytest.mark.asyncio
-async def test_create_inventory_nonexistent_location(client: AsyncClient, sample_inventory_data):
+async def test_create_inventory_nonexistent_location(client: AsyncClient, sample_inventory_data) -> None:
     """Test creating inventory for nonexistent location fails."""
     fake_location_id = str(uuid.uuid4())
     inventory_data = {
         **sample_inventory_data,
         "product_id": str(uuid.uuid4()),
-        "location_id": fake_location_id
+        "location_id": fake_location_id,
     }
     
     response = await client.post("/api/v1/inventory", json=inventory_data)
@@ -48,7 +49,7 @@ async def test_create_inventory_nonexistent_location(client: AsyncClient, sample
 
 
 @pytest.mark.asyncio
-async def test_create_duplicate_inventory(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_create_duplicate_inventory(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test creating duplicate inventory record fails."""
     # Create location
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -58,7 +59,7 @@ async def test_create_duplicate_inventory(client: AsyncClient, sample_location_d
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     # Create first inventory
@@ -71,7 +72,7 @@ async def test_create_duplicate_inventory(client: AsyncClient, sample_location_d
 
 
 @pytest.mark.asyncio
-async def test_get_inventory_stats(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_get_inventory_stats(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test getting inventory stats for a product."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -81,7 +82,7 @@ async def test_get_inventory_stats(client: AsyncClient, sample_location_data, sa
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -99,7 +100,7 @@ async def test_get_inventory_stats(client: AsyncClient, sample_location_data, sa
 
 
 @pytest.mark.asyncio
-async def test_get_inventory_nonexistent_product(client: AsyncClient):
+async def test_get_inventory_nonexistent_product(client: AsyncClient) -> None:
     """Test getting inventory for nonexistent product returns 404."""
     fake_product_id = str(uuid.uuid4())
     response = await client.get(f"/api/v1/inventory/{fake_product_id}")
@@ -107,7 +108,7 @@ async def test_get_inventory_nonexistent_product(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_reserve_inventory(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_reserve_inventory(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test reserving inventory."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -117,7 +118,7 @@ async def test_reserve_inventory(client: AsyncClient, sample_location_data, samp
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -129,7 +130,7 @@ async def test_reserve_inventory(client: AsyncClient, sample_location_data, samp
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -144,7 +145,7 @@ async def test_reserve_inventory(client: AsyncClient, sample_location_data, samp
 
 
 @pytest.mark.asyncio
-async def test_reserve_insufficient_inventory(client: AsyncClient, sample_location_data):
+async def test_reserve_insufficient_inventory(client: AsyncClient, sample_location_data) -> None:
     """Test reserving more inventory than available fails."""
     # Setup: Create location and low inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -156,7 +157,7 @@ async def test_reserve_insufficient_inventory(client: AsyncClient, sample_locati
         "location_id": location_id,
         "quantity_available": 5,  # Only 5 available
         "reorder_point": 10,
-        "reorder_quantity": 50
+        "reorder_quantity": 50,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -168,7 +169,7 @@ async def test_reserve_insufficient_inventory(client: AsyncClient, sample_locati
         "location_id": location_id,
         "quantity": 10,  # More than available
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -176,7 +177,7 @@ async def test_reserve_insufficient_inventory(client: AsyncClient, sample_locati
 
 
 @pytest.mark.asyncio
-async def test_release_inventory(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_release_inventory(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test releasing reserved inventory."""
     # Setup: Create location and inventory, then reserve some
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -186,7 +187,7 @@ async def test_release_inventory(client: AsyncClient, sample_location_data, samp
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -198,7 +199,7 @@ async def test_release_inventory(client: AsyncClient, sample_location_data, samp
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -209,7 +210,7 @@ async def test_release_inventory(client: AsyncClient, sample_location_data, samp
         "product_id": product_id,
         "location_id": location_id,
         "quantity": 10,
-        "order_id": order_id
+        "order_id": order_id,
     }
     
     response = await client.post("/api/v1/inventory/release", json=release_data)
@@ -222,7 +223,7 @@ async def test_release_inventory(client: AsyncClient, sample_location_data, samp
 
 
 @pytest.mark.asyncio
-async def test_adjust_inventory_positive(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_adjust_inventory_positive(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test adjusting inventory upward (adding stock)."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -232,7 +233,7 @@ async def test_adjust_inventory_positive(client: AsyncClient, sample_location_da
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -244,7 +245,7 @@ async def test_adjust_inventory_positive(client: AsyncClient, sample_location_da
         "quantity_change": 50,  # Add 50 units
         "adjustment_type": "restock",
         "reason": "New shipment arrived",
-        "created_by": "test_user"
+        "created_by": "test_user",
     }
     
     response = await client.post("/api/v1/inventory/adjust", json=adjust_data)
@@ -257,7 +258,7 @@ async def test_adjust_inventory_positive(client: AsyncClient, sample_location_da
 
 
 @pytest.mark.asyncio
-async def test_adjust_inventory_negative(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_adjust_inventory_negative(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test adjusting inventory downward (removing stock)."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -267,7 +268,7 @@ async def test_adjust_inventory_negative(client: AsyncClient, sample_location_da
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -279,7 +280,7 @@ async def test_adjust_inventory_negative(client: AsyncClient, sample_location_da
         "quantity_change": -20,  # Remove 20 units
         "adjustment_type": "damage",
         "reason": "Damaged during handling",
-        "created_by": "test_user"
+        "created_by": "test_user",
     }
     
     response = await client.post("/api/v1/inventory/adjust", json=adjust_data)
@@ -292,7 +293,7 @@ async def test_adjust_inventory_negative(client: AsyncClient, sample_location_da
 
 
 @pytest.mark.asyncio
-async def test_adjust_inventory_negative_overflow(client: AsyncClient, sample_location_data):
+async def test_adjust_inventory_negative_overflow(client: AsyncClient, sample_location_data) -> None:
     """Test adjusting inventory below zero fails."""
     # Setup: Create location and low inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -304,7 +305,7 @@ async def test_adjust_inventory_negative_overflow(client: AsyncClient, sample_lo
         "location_id": location_id,
         "quantity_available": 10,  # Only 10 available
         "reorder_point": 5,
-        "reorder_quantity": 50
+        "reorder_quantity": 50,
     }
     
     await client.post("/api/v1/inventory", json=inventory_data)
@@ -315,7 +316,7 @@ async def test_adjust_inventory_negative_overflow(client: AsyncClient, sample_lo
         "location_id": location_id,
         "quantity_change": -20,  # Remove more than available
         "adjustment_type": "damage",
-        "created_by": "test_user"
+        "created_by": "test_user",
     }
     
     response = await client.post("/api/v1/inventory/adjust", json=adjust_data)
@@ -323,7 +324,7 @@ async def test_adjust_inventory_negative_overflow(client: AsyncClient, sample_lo
 
 
 @pytest.mark.asyncio
-async def test_get_low_stock_items(client: AsyncClient, sample_location_data):
+async def test_get_low_stock_items(client: AsyncClient, sample_location_data) -> None:
     """Test getting low stock items."""
     # Setup: Create location
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -336,22 +337,22 @@ async def test_get_low_stock_items(client: AsyncClient, sample_location_data):
             "location_id": location_id,
             "quantity_available": 5,   # Below reorder point (10)
             "reorder_point": 10,
-            "reorder_quantity": 50
+            "reorder_quantity": 50,
         },
         {
             "product_id": str(uuid.uuid4()),
             "location_id": location_id,
             "quantity_available": 50,  # Above reorder point
             "reorder_point": 10,
-            "reorder_quantity": 50
+            "reorder_quantity": 50,
         },
         {
             "product_id": str(uuid.uuid4()),
             "location_id": location_id,
             "quantity_available": 8,   # Below reorder point (15)
             "reorder_point": 15,
-            "reorder_quantity": 50
-        }
+            "reorder_quantity": 50,
+        },
     ]
     
     for inventory_data in inventories:
@@ -375,16 +376,16 @@ async def test_get_low_stock_items(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_get_low_stock_items_filtered_by_location(client: AsyncClient, sample_location_data):
+async def test_get_low_stock_items_filtered_by_location(client: AsyncClient, sample_location_data) -> None:
     """Test getting low stock items filtered by location."""
     # Setup: Create two locations
     location1_response = await client.post("/api/v1/locations", json={
-        **sample_location_data, "name": "Warehouse 1"
+        **sample_location_data, "name": "Warehouse 1",
     })
     location1_id = location1_response.json()["id"]
     
     location2_response = await client.post("/api/v1/locations", json={
-        **sample_location_data, "name": "Warehouse 2"
+        **sample_location_data, "name": "Warehouse 2",
     })
     location2_id = location2_response.json()["id"]
     
@@ -394,7 +395,7 @@ async def test_get_low_stock_items_filtered_by_location(client: AsyncClient, sam
         "location_id": location1_id,
         "quantity_available": 5,   # Below reorder point
         "reorder_point": 10,
-        "reorder_quantity": 50
+        "reorder_quantity": 50,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -404,7 +405,7 @@ async def test_get_low_stock_items_filtered_by_location(client: AsyncClient, sam
         "location_id": location2_id,
         "quantity_available": 50,  # Above reorder point
         "reorder_point": 10,
-        "reorder_quantity": 50
+        "reorder_quantity": 50,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     

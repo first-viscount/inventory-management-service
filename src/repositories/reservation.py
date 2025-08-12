@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import and_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.core.logging import get_logger
@@ -57,7 +56,7 @@ class ReservationRepository(BaseRepository[Reservation]):
                 and_(
                     Reservation.order_id == order_id,
                     Reservation.status == ReservationStatus.ACTIVE,
-                )
+                ),
             )
         )
         result = await self.session.execute(stmt)
@@ -111,7 +110,7 @@ class ReservationRepository(BaseRepository[Reservation]):
 
     async def get_expired_reservations(self, limit: int = 100) -> list[Reservation]:
         """Get expired reservations that need to be processed."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stmt = (
             select(Reservation)
             .options(selectinload(Reservation.inventory))
@@ -119,7 +118,7 @@ class ReservationRepository(BaseRepository[Reservation]):
                 and_(
                     Reservation.status == ReservationStatus.ACTIVE,
                     Reservation.expires_at <= now,
-                )
+                ),
             )
             .limit(limit)
         )
@@ -150,10 +149,9 @@ class ReservationRepository(BaseRepository[Reservation]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to mark reservation as completed",
                 reservation_id=str(reservation_id),
-                error=str(e),
             )
             return False
 
@@ -181,10 +179,9 @@ class ReservationRepository(BaseRepository[Reservation]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to mark reservation as expired",
                 reservation_id=str(reservation_id),
-                error=str(e),
             )
             return False
 
@@ -212,9 +209,8 @@ class ReservationRepository(BaseRepository[Reservation]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to release reservation",
                 reservation_id=str(reservation_id),
-                error=str(e),
             )
             return False

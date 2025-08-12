@@ -1,30 +1,26 @@
 """Event publishing service for Inventory Management Service."""
 
 import uuid
-from typing import Optional
 
 import structlog
 
 from src.models.events import (
-    InventoryReservedEvent,
-    InventoryReleasedEvent,
-    InventoryAdjustedEvent,
-    LowStockAlertEvent,
-    InventoryUpdatedEvent,
-    ReservationData,
-    InventoryReleaseData,
-    InventoryAdjustmentData,
-    LowStockAlertData,
-    InventoryUpdateData,
-    ServiceName,
+    TOPICS,
     AdjustmentType,
     AlertLevel,
+    InventoryAdjustedEvent,
+    InventoryAdjustmentData,
+    InventoryReleaseData,
+    InventoryReleasedEvent,
+    InventoryReservedEvent,
+    InventoryUpdateData,
+    InventoryUpdatedEvent,
+    LowStockAlertData,
+    LowStockAlertEvent,
+    ReservationData,
+    ServiceName,
     UpdateType,
-    TOPICS,
 )
-
-from .config import settings
-
 
 logger = structlog.get_logger(__name__)
 
@@ -43,15 +39,15 @@ class InventoryEventService:
     - General inventory updates
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the event service."""
         self.logger = logger.bind(component="event_service")
         
-    async def start(self):
+    async def start(self) -> None:
         """Start the event service (no-op for logging implementation)."""
         self.logger.info("Event service started (logging mode)")
     
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the event service (no-op for logging implementation)."""
         self.logger.info("Event service stopped")
     
@@ -60,11 +56,11 @@ class InventoryEventService:
         reservation_id: str,
         product_id: str,
         quantity: int,
-        location_id: Optional[str] = None,
-        order_id: Optional[str] = None,
-        expires_at: Optional[str] = None,
-        correlation_id: Optional[str] = None
-    ):
+        location_id: str | None = None,
+        order_id: str | None = None,
+        expires_at: str | None = None,
+        correlation_id: str | None = None,
+    ) -> None:
         """Log InventoryReserved event (MVP implementation)."""
         try:
             # Create event data
@@ -74,14 +70,14 @@ class InventoryEventService:
                 quantity=quantity,
                 location_id=location_id,
                 order_id=order_id,
-                expires_at=expires_at
+                expires_at=expires_at,
             )
             
             # Create event
             event = InventoryReservedEvent(
                 correlation_id=correlation_id or str(uuid.uuid4()),
                 source_service=ServiceName.INVENTORY_MANAGEMENT,
-                data=reservation_data.dict()
+                data=reservation_data.dict(),
             )
             
             # Log event (instead of publishing to Kafka)
@@ -95,15 +91,14 @@ class InventoryEventService:
                 product_id=product_id,
                 quantity=quantity,
                 location_id=location_id,
-                order_id=order_id
+                order_id=order_id,
             )
             
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to log InventoryReserved event",
                 reservation_id=reservation_id,
                 product_id=product_id,
-                error=str(e)
             )
     
     async def publish_inventory_released(
@@ -112,9 +107,9 @@ class InventoryEventService:
         product_id: str,
         quantity: int,
         reason: str,
-        location_id: Optional[str] = None,
-        correlation_id: Optional[str] = None
-    ):
+        location_id: str | None = None,
+        correlation_id: str | None = None,
+    ) -> None:
         """Log InventoryReleased event (MVP implementation)."""
         try:
             # Create event data
@@ -123,14 +118,14 @@ class InventoryEventService:
                 product_id=product_id,
                 quantity=quantity,
                 location_id=location_id,
-                reason=reason
+                reason=reason,
             )
             
             # Create event
             event = InventoryReleasedEvent(
                 correlation_id=correlation_id or str(uuid.uuid4()),
                 source_service=ServiceName.INVENTORY_MANAGEMENT,
-                data=release_data.dict()
+                data=release_data.dict(),
             )
             
             # Log event (instead of publishing to Kafka)
@@ -144,15 +139,14 @@ class InventoryEventService:
                 product_id=product_id,
                 quantity=quantity,
                 location_id=location_id,
-                reason=reason
+                reason=reason,
             )
             
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to log InventoryReleased event",
                 reservation_id=reservation_id,
                 product_id=product_id,
-                error=str(e)
             )
     
     async def publish_inventory_adjusted(
@@ -161,11 +155,11 @@ class InventoryEventService:
         old_quantity: int,
         new_quantity: int,
         adjustment_type: str,
-        location_id: Optional[str] = None,
-        reason: Optional[str] = None,
-        reference_number: Optional[str] = None,
-        correlation_id: Optional[str] = None
-    ):
+        location_id: str | None = None,
+        reason: str | None = None,
+        reference_number: str | None = None,
+        correlation_id: str | None = None,
+    ) -> None:
         """Log InventoryAdjusted event (MVP implementation)."""
         try:
             # Create event data
@@ -176,14 +170,14 @@ class InventoryEventService:
                 new_quantity=new_quantity,
                 adjustment_type=AdjustmentType(adjustment_type),
                 reason=reason,
-                reference_number=reference_number
+                reference_number=reference_number,
             )
             
             # Create event
             event = InventoryAdjustedEvent(
                 correlation_id=correlation_id or str(uuid.uuid4()),
                 source_service=ServiceName.INVENTORY_MANAGEMENT,
-                data=adjustment_data.dict()
+                data=adjustment_data.dict(),
             )
             
             # Log event (instead of publishing to Kafka)
@@ -198,14 +192,13 @@ class InventoryEventService:
                 new_quantity=new_quantity,
                 adjustment_type=adjustment_type,
                 location_id=location_id,
-                reason=reason
+                reason=reason,
             )
             
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to log InventoryAdjusted event",
                 product_id=product_id,
-                error=str(e)
             )
     
     async def publish_low_stock_alert(
@@ -214,9 +207,9 @@ class InventoryEventService:
         current_quantity: int,
         threshold: int,
         alert_level: str,
-        location_id: Optional[str] = None,
-        correlation_id: Optional[str] = None
-    ):
+        location_id: str | None = None,
+        correlation_id: str | None = None,
+    ) -> None:
         """Log LowStockAlert event (MVP implementation)."""
         try:
             # Create event data
@@ -225,14 +218,14 @@ class InventoryEventService:
                 location_id=location_id,
                 current_quantity=current_quantity,
                 threshold=threshold,
-                alert_level=AlertLevel(alert_level)
+                alert_level=AlertLevel(alert_level),
             )
             
             # Create event
             event = LowStockAlertEvent(
                 correlation_id=correlation_id or str(uuid.uuid4()),
                 source_service=ServiceName.INVENTORY_MANAGEMENT,
-                data=alert_data.dict()
+                data=alert_data.dict(),
             )
             
             # Log event (instead of publishing to Kafka)
@@ -246,14 +239,13 @@ class InventoryEventService:
                 current_quantity=current_quantity,
                 threshold=threshold,
                 alert_level=alert_level,
-                location_id=location_id
+                location_id=location_id,
             )
             
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to log LowStockAlert event",
                 product_id=product_id,
-                error=str(e)
             )
     
     async def publish_inventory_updated(
@@ -261,12 +253,12 @@ class InventoryEventService:
         product_id: str,
         quantity: int,
         update_type: str,
-        location_id: Optional[str] = None,
-        reserved_quantity: Optional[int] = None,
-        available_quantity: Optional[int] = None,
-        source_event: Optional[str] = None,
-        correlation_id: Optional[str] = None
-    ):
+        location_id: str | None = None,
+        reserved_quantity: int | None = None,
+        available_quantity: int | None = None,
+        source_event: str | None = None,
+        correlation_id: str | None = None,
+    ) -> None:
         """Log InventoryUpdated event (MVP implementation)."""
         try:
             # Create event data
@@ -277,14 +269,14 @@ class InventoryEventService:
                 reserved_quantity=reserved_quantity,
                 available_quantity=available_quantity,
                 update_type=UpdateType(update_type),
-                source_event=source_event
+                source_event=source_event,
             )
             
             # Create event
             event = InventoryUpdatedEvent(
                 correlation_id=correlation_id or str(uuid.uuid4()),
                 source_service=ServiceName.INVENTORY_MANAGEMENT,
-                data=update_data.dict()
+                data=update_data.dict(),
             )
             
             # Log event (instead of publishing to Kafka)
@@ -299,19 +291,18 @@ class InventoryEventService:
                 update_type=update_type,
                 location_id=location_id,
                 reserved_quantity=reserved_quantity,
-                available_quantity=available_quantity
+                available_quantity=available_quantity,
             )
             
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Failed to log InventoryUpdated event",
                 product_id=product_id,
-                error=str(e)
             )
 
 
 # Global instance
-_event_service: Optional[InventoryEventService] = None
+_event_service: InventoryEventService | None = None
 
 
 async def get_event_service() -> InventoryEventService:
@@ -323,7 +314,7 @@ async def get_event_service() -> InventoryEventService:
     return _event_service
 
 
-async def close_event_service():
+async def close_event_service() -> None:
     """Close the global event service instance."""
     global _event_service
     if _event_service is not None:

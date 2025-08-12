@@ -2,7 +2,7 @@
 
 import asyncio
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from src.core.database import get_db_context
 from src.core.logging import get_logger
@@ -56,7 +56,7 @@ class BackgroundMetricsUpdater:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("Error updating background metrics", error=str(e))
+                logger.exception("Error updating background metrics")
                 await asyncio.sleep(self.update_interval)
 
     async def _update_inventory_metrics(self) -> None:
@@ -75,7 +75,7 @@ class BackgroundMetricsUpdater:
                 
                 # Count active reservations
                 reservation_count_stmt = select(func.count(Reservation.id)).where(
-                    Reservation.status == 'active'
+                    Reservation.status == "active",
                 )
                 reservation_result = await session.execute(reservation_count_stmt)
                 active_reservations = reservation_result.scalar_one()
@@ -85,11 +85,11 @@ class BackgroundMetricsUpdater:
                     "Updated inventory metrics", 
                     total_inventory=total_inventory,
                     total_locations=total_locations,
-                    active_reservations=active_reservations
+                    active_reservations=active_reservations,
                 )
                     
         except Exception as e:
-            logger.error("Failed to update inventory metrics", error=str(e))
+            logger.exception("Failed to update inventory metrics")
 
 
 # Global instance

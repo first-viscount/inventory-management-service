@@ -59,15 +59,15 @@ def _update_pool_metrics() -> None:
         # Get pool statistics if available
         if hasattr(engine, "pool"):
             pool = engine.pool
-            # Check if pool has size() method (NullPool doesn't have these methods)
-            if hasattr(pool, 'size') and hasattr(pool, 'checkedout') and hasattr(pool, 'overflow'):
-                metrics.update_db_pool_metrics(
-                    pool_size=pool.size(),
-                    checked_out=pool.checkedout(),
-                    overflow=pool.overflow(),
+            # Check if pool has all required methods (NullPool doesn't have these methods)
+            if all(hasattr(pool, attr) for attr in ["size", "checkedout", "overflow"]):
+                metrics.update_db_pool_metrics(  # type: ignore[attr-defined]
+                    pool_size=pool.size(),  # type: ignore[attr-defined]
+                    checked_out=pool.checkedout(),  # type: ignore[attr-defined]
+                    overflow=pool.overflow(),  # type: ignore[attr-defined]
                 )
-    except Exception as e:
-        logger.debug("Could not update pool metrics", error=str(e))
+    except Exception:
+        logger.debug("Could not update pool metrics", exc_info=True)
 
 
 @asynccontextmanager
@@ -92,7 +92,7 @@ async def init_db() -> None:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error("Failed to initialize database", error=str(e))
+        logger.exception("Failed to initialize database")
         raise
 
 

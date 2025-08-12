@@ -11,7 +11,7 @@ from structlog.stdlib import filter_by_level
 # Thread-safe context variables
 _request_id_context: ContextVar[str | None] = ContextVar("request_id", default=None)
 _correlation_id_context: ContextVar[str | None] = ContextVar(
-    "correlation_id", default=None
+    "correlation_id", default=None,
 )
 _user_id_context: ContextVar[str | None] = ContextVar("user_id", default=None)
 
@@ -56,13 +56,13 @@ def setup_logging(
             parameters=[
                 structlog.processors.CallsiteParameter.FUNC_NAME,
                 structlog.processors.CallsiteParameter.LINENO,
-            ]
-        )
+            ],
+        ),
     )
 
     # Add custom context including thread-safe request context
     def add_custom_context(
-        logger: Any, method_name: str, event_dict: dict[str, Any]
+        logger: Any, method_name: str, event_dict: dict[str, Any],
     ) -> dict[str, Any]:
         """Add custom context to all log entries."""
         event_dict["service"] = service_name
@@ -111,7 +111,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
 
 
 def log_event(
-    logger: structlog.stdlib.BoundLogger, event: str, level: str = "info", **kwargs: Any
+    logger: structlog.stdlib.BoundLogger, event: str, level: str = "info", **kwargs: Any,
 ) -> None:
     """Log a structured event with additional context.
 

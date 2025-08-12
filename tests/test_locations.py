@@ -1,12 +1,13 @@
 """Test location management endpoints."""
 
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_location(client: AsyncClient, sample_location_data):
+async def test_create_location(client: AsyncClient, sample_location_data) -> None:
     """Test creating a new location."""
     response = await client.post("/api/v1/locations", json=sample_location_data)
     
@@ -23,7 +24,7 @@ async def test_create_location(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_create_location_duplicate_name(client: AsyncClient, sample_location_data):
+async def test_create_location_duplicate_name(client: AsyncClient, sample_location_data) -> None:
     """Test creating location with duplicate name fails."""
     # Create first location
     response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -35,7 +36,7 @@ async def test_create_location_duplicate_name(client: AsyncClient, sample_locati
 
 
 @pytest.mark.asyncio
-async def test_get_location(client: AsyncClient, sample_location_data):
+async def test_get_location(client: AsyncClient, sample_location_data) -> None:
     """Test getting a location by ID."""
     # Create location first
     response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -54,7 +55,7 @@ async def test_get_location(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_get_nonexistent_location(client: AsyncClient):
+async def test_get_nonexistent_location(client: AsyncClient) -> None:
     """Test getting a nonexistent location returns 404."""
     fake_id = str(uuid.uuid4())
     response = await client.get(f"/api/v1/locations/{fake_id}")
@@ -62,7 +63,7 @@ async def test_get_nonexistent_location(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_locations(client: AsyncClient, sample_location_data):
+async def test_list_locations(client: AsyncClient, sample_location_data) -> None:
     """Test listing locations."""
     # Create a few locations
     locations_data = [
@@ -87,7 +88,7 @@ async def test_list_locations(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_list_locations_by_type(client: AsyncClient, sample_location_data):
+async def test_list_locations_by_type(client: AsyncClient, sample_location_data) -> None:
     """Test listing locations filtered by type."""
     # Create locations of different types
     warehouse_data = {**sample_location_data, "name": "Warehouse 1", "type": "warehouse"}
@@ -107,7 +108,7 @@ async def test_list_locations_by_type(client: AsyncClient, sample_location_data)
 
 
 @pytest.mark.asyncio
-async def test_get_locations_by_type_endpoint(client: AsyncClient, sample_location_data):
+async def test_get_locations_by_type_endpoint(client: AsyncClient, sample_location_data) -> None:
     """Test the dedicated endpoint for getting locations by type."""
     # Create warehouses
     warehouse_data = {**sample_location_data, "name": "Warehouse 1", "type": "warehouse"}
@@ -124,7 +125,7 @@ async def test_get_locations_by_type_endpoint(client: AsyncClient, sample_locati
 
 
 @pytest.mark.asyncio
-async def test_update_location(client: AsyncClient, sample_location_data):
+async def test_update_location(client: AsyncClient, sample_location_data) -> None:
     """Test updating a location."""
     # Create location first
     response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -136,7 +137,7 @@ async def test_update_location(client: AsyncClient, sample_location_data):
     update_data = {
         "name": "Updated Warehouse",
         "address": "456 New St, New City, NC 67890",
-        "type": "store"
+        "type": "store",
     }
     
     response = await client.put(f"/api/v1/locations/{location_id}", json=update_data)
@@ -150,7 +151,7 @@ async def test_update_location(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_update_location_partial(client: AsyncClient, sample_location_data):
+async def test_update_location_partial(client: AsyncClient, sample_location_data) -> None:
     """Test partial update of a location."""
     # Create location first
     response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -171,7 +172,7 @@ async def test_update_location_partial(client: AsyncClient, sample_location_data
 
 
 @pytest.mark.asyncio
-async def test_update_nonexistent_location(client: AsyncClient):
+async def test_update_nonexistent_location(client: AsyncClient) -> None:
     """Test updating a nonexistent location returns 404."""
     fake_id = str(uuid.uuid4())
     update_data = {"name": "New Name"}
@@ -181,7 +182,7 @@ async def test_update_nonexistent_location(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_location(client: AsyncClient, sample_location_data):
+async def test_deactivate_location(client: AsyncClient, sample_location_data) -> None:
     """Test deactivating a location."""
     # Create location first
     response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -201,7 +202,7 @@ async def test_deactivate_location(client: AsyncClient, sample_location_data):
 
 
 @pytest.mark.asyncio
-async def test_deactivate_nonexistent_location(client: AsyncClient):
+async def test_deactivate_nonexistent_location(client: AsyncClient) -> None:
     """Test deactivating a nonexistent location returns 404."""
     fake_id = str(uuid.uuid4())
     response = await client.delete(f"/api/v1/locations/{fake_id}")
@@ -209,7 +210,7 @@ async def test_deactivate_nonexistent_location(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_includes_inactive_when_requested(client: AsyncClient, sample_location_data):
+async def test_list_includes_inactive_when_requested(client: AsyncClient, sample_location_data) -> None:
     """Test listing locations includes inactive when requested."""
     # Create location
     response = await client.post("/api/v1/locations", json=sample_location_data)

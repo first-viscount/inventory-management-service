@@ -1,10 +1,11 @@
 """Prometheus metrics configuration and collectors."""
 
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram, CollectorRegistry, REGISTRY
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.logging import get_logger
@@ -114,51 +115,51 @@ class MetricsCollector:
         logger.info("Metrics collector initialized")
 
     def record_service_registration(
-        self, service_type: str, duration: float, success: bool = True
+        self, service_type: str, duration: float, success: bool = True,
     ) -> None:
         """Record service registration metrics."""
         status = "success" if success else "error"
         service_registrations_total.labels(
-            service_type=service_type, status=status
+            service_type=service_type, status=status,
         ).inc()
         service_registration_duration_seconds.labels(service_type=service_type).observe(
-            duration
+            duration,
         )
 
     def update_active_services_count(
-        self, service_type: str, status: str, count: int
+        self, service_type: str, status: str, count: int,
     ) -> None:
         """Update the count of active services."""
         active_services.labels(service_type=service_type, status=status).set(count)
 
     def record_service_query(
-        self, query_type: str, duration: float, success: bool = True
+        self, query_type: str, duration: float, success: bool = True,
     ) -> None:
         """Record service query metrics."""
         status = "success" if success else "error"
         service_query_duration_seconds.labels(
-            query_type=query_type, status=status
+            query_type=query_type, status=status,
         ).observe(duration)
 
     def record_service_discovery(
-        self, service_name: str, found: bool = True
+        self, service_name: str, found: bool = True,
     ) -> None:
         """Record service discovery request."""
         status = "found" if found else "not_found"
         service_discovery_requests_total.labels(
-            service_name=service_name, status=status
+            service_name=service_name, status=status,
         ).inc()
 
     def record_database_query(
-        self, operation: str, table: str, duration: float
+        self, operation: str, table: str, duration: float,
     ) -> None:
         """Record database query metrics."""
         db_query_duration_seconds.labels(operation=operation, table=table).observe(
-            duration
+            duration,
         )
 
     def update_db_pool_metrics(
-        self, pool_size: int, checked_out: int, overflow: int
+        self, pool_size: int, checked_out: int, overflow: int,
     ) -> None:
         """Update database pool metrics."""
         db_pool_size.set(pool_size)
@@ -171,8 +172,8 @@ class MetricsCollector:
 
     @asynccontextmanager
     async def timed_operation(
-        self, operation_type: str, **labels: Any
-    ) -> AsyncGenerator[None, None]:
+        self, operation_type: str, **labels: Any,
+    ) -> AsyncGenerator[None]:
         """Context manager for timing operations."""
         start_time = time.time()
         try:
@@ -184,11 +185,11 @@ class MetricsCollector:
             duration = time.time() - start_time
             if operation_type == "service_registration":
                 self.record_service_registration(
-                    labels.get("service_type", "unknown"), duration
+                    labels.get("service_type", "unknown"), duration,
                 )
             elif operation_type == "service_query":
                 self.record_service_query(
-                    labels.get("query_type", "unknown"), duration
+                    labels.get("query_type", "unknown"), duration,
                 )
             elif operation_type == "database_query":
                 self.record_database_query(
@@ -209,8 +210,8 @@ def get_metrics_collector() -> MetricsCollector:
 
 @asynccontextmanager
 async def db_metrics_context(
-    session: AsyncSession, operation: str, table: str
-) -> AsyncGenerator[None, None]:
+    session: AsyncSession, operation: str, table: str,
+) -> AsyncGenerator[None]:
     """Context manager for database operations with metrics."""
     start_time = time.time()
     try:
@@ -223,7 +224,7 @@ async def db_metrics_context(
         if hasattr(session.get_bind(), "pool"):
             pool = session.get_bind().pool
             # Check if pool has size() method (NullPool doesn't have these methods)
-            if hasattr(pool, 'size') and hasattr(pool, 'checkedout') and hasattr(pool, 'overflow'):
+            if hasattr(pool, "size") and hasattr(pool, "checkedout") and hasattr(pool, "overflow"):
                 metrics_collector.update_db_pool_metrics(
                     pool_size=pool.size(),
                     checked_out=pool.checkedout(),

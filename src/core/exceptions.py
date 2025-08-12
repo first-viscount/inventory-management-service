@@ -16,7 +16,7 @@ class InventoryManagementError(Exception):
         error_code: str | None = None,
         details: list[dict[str, Any]] | None = None,
         context: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.message = message
         self.status_code = status_code
@@ -30,7 +30,7 @@ class ValidationError(InventoryManagementError):
 
     def __init__(self, message: str, **kwargs: Any) -> None:
         super().__init__(
-            message, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, **kwargs
+            message, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, **kwargs,
         )
 
 
@@ -66,7 +66,7 @@ class ForbiddenError(InventoryManagementError):
     """Raised when the user doesn't have permission."""
 
     def __init__(
-        self, message: str = "Insufficient permissions", **kwargs: Any
+        self, message: str = "Insufficient permissions", **kwargs: Any,
     ) -> None:
         super().__init__(message, status_code=status.HTTP_403_FORBIDDEN, **kwargs)
 
@@ -83,7 +83,7 @@ class ServiceUnavailableError(InventoryManagementError):
 
     def __init__(self, message: str, **kwargs: Any) -> None:
         super().__init__(
-            message, status_code=status.HTTP_503_SERVICE_UNAVAILABLE, **kwargs
+            message, status_code=status.HTTP_503_SERVICE_UNAVAILABLE, **kwargs,
         )
 
 
@@ -92,7 +92,7 @@ class RateLimitError(InventoryManagementError):
 
     def __init__(self, message: str = "Rate limit exceeded", **kwargs: Any) -> None:
         super().__init__(
-            message, status_code=status.HTTP_429_TOO_MANY_REQUESTS, **kwargs
+            message, status_code=status.HTTP_429_TOO_MANY_REQUESTS, **kwargs,
         )
 
 
@@ -101,5 +101,5 @@ class InternalServerError(InventoryManagementError):
 
     def __init__(self, message: str = "Internal server error", **kwargs: Any) -> None:
         super().__init__(
-            message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, **kwargs
+            message, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, **kwargs,
         )

@@ -1,13 +1,13 @@
 """Test reservation management endpoints."""
 
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
-from datetime import datetime, timedelta
 
 
 @pytest.mark.asyncio
-async def test_list_reservations_empty(client: AsyncClient):
+async def test_list_reservations_empty(client: AsyncClient) -> None:
     """Test listing reservations when none exist."""
     response = await client.get("/api/v1/reservations")
     assert response.status_code == 200
@@ -15,7 +15,7 @@ async def test_list_reservations_empty(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_reservation_after_creation(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_get_reservation_after_creation(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test getting a specific reservation after creation."""
     # Setup: Create location, inventory, and make a reservation
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -25,7 +25,7 @@ async def test_get_reservation_after_creation(client: AsyncClient, sample_locati
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -36,7 +36,7 @@ async def test_get_reservation_after_creation(client: AsyncClient, sample_locati
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     reserve_response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -56,7 +56,7 @@ async def test_get_reservation_after_creation(client: AsyncClient, sample_locati
 
 
 @pytest.mark.asyncio
-async def test_get_nonexistent_reservation(client: AsyncClient):
+async def test_get_nonexistent_reservation(client: AsyncClient) -> None:
     """Test getting a nonexistent reservation returns 404."""
     fake_id = str(uuid.uuid4())
     response = await client.get(f"/api/v1/reservations/{fake_id}")
@@ -64,7 +64,7 @@ async def test_get_nonexistent_reservation(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_list_reservations_by_order(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_list_reservations_by_order(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test listing reservations filtered by order ID."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -74,7 +74,7 @@ async def test_list_reservations_by_order(client: AsyncClient, sample_location_d
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -88,7 +88,7 @@ async def test_list_reservations_by_order(client: AsyncClient, sample_location_d
         "location_id": location_id,
         "quantity": 10,
         "order_id": order1_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     response1 = await client.post("/api/v1/inventory/reserve", json=reserve_data1)
     assert response1.status_code == 201
@@ -99,7 +99,7 @@ async def test_list_reservations_by_order(client: AsyncClient, sample_location_d
         "location_id": location_id,
         "quantity": 5,
         "order_id": order2_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     response2 = await client.post("/api/v1/inventory/reserve", json=reserve_data2)
     assert response2.status_code == 201
@@ -115,7 +115,7 @@ async def test_list_reservations_by_order(client: AsyncClient, sample_location_d
 
 
 @pytest.mark.asyncio
-async def test_list_reservations_by_product(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_list_reservations_by_product(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test listing reservations filtered by product ID."""
     # Setup: Create location and two products with inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -129,7 +129,7 @@ async def test_list_reservations_by_product(client: AsyncClient, sample_location
         inventory_data = {
             **sample_inventory_data,
             "product_id": product_id,
-            "location_id": location_id
+            "location_id": location_id,
         }
         await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -140,7 +140,7 @@ async def test_list_reservations_by_product(client: AsyncClient, sample_location
             "location_id": location_id,
             "quantity": i * 5,  # 5 and 10
             "order_id": str(uuid.uuid4()),
-            "expires_minutes": 60
+            "expires_minutes": 60,
         }
         response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
         assert response.status_code == 201
@@ -156,7 +156,7 @@ async def test_list_reservations_by_product(client: AsyncClient, sample_location
 
 
 @pytest.mark.asyncio
-async def test_list_reservations_by_status(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_list_reservations_by_status(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test listing reservations filtered by status."""
     # Setup: Create location, inventory, and reservation
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -166,7 +166,7 @@ async def test_list_reservations_by_status(client: AsyncClient, sample_location_
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -177,7 +177,7 @@ async def test_list_reservations_by_status(client: AsyncClient, sample_location_
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     reserve_response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -200,7 +200,7 @@ async def test_list_reservations_by_status(client: AsyncClient, sample_location_
 
 
 @pytest.mark.asyncio
-async def test_complete_reservation(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_complete_reservation(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test marking a reservation as completed."""
     # Setup: Create location, inventory, and reservation
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -210,7 +210,7 @@ async def test_complete_reservation(client: AsyncClient, sample_location_data, s
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -221,7 +221,7 @@ async def test_complete_reservation(client: AsyncClient, sample_location_data, s
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     reserve_response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -238,7 +238,7 @@ async def test_complete_reservation(client: AsyncClient, sample_location_data, s
 
 
 @pytest.mark.asyncio
-async def test_complete_nonexistent_reservation(client: AsyncClient):
+async def test_complete_nonexistent_reservation(client: AsyncClient) -> None:
     """Test completing a nonexistent reservation returns 404."""
     fake_id = str(uuid.uuid4())
     response = await client.post(f"/api/v1/reservations/{fake_id}/complete")
@@ -246,7 +246,7 @@ async def test_complete_nonexistent_reservation(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_release_reservation_via_endpoint(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_release_reservation_via_endpoint(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test releasing a reservation via the reservation endpoint."""
     # Setup: Create location, inventory, and reservation
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -256,7 +256,7 @@ async def test_release_reservation_via_endpoint(client: AsyncClient, sample_loca
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -267,7 +267,7 @@ async def test_release_reservation_via_endpoint(client: AsyncClient, sample_loca
         "location_id": location_id,
         "quantity": 10,
         "order_id": order_id,
-        "expires_minutes": 60
+        "expires_minutes": 60,
     }
     
     reserve_response = await client.post("/api/v1/inventory/reserve", json=reserve_data)
@@ -291,7 +291,7 @@ async def test_release_reservation_via_endpoint(client: AsyncClient, sample_loca
 
 
 @pytest.mark.asyncio
-async def test_release_nonexistent_reservation(client: AsyncClient):
+async def test_release_nonexistent_reservation(client: AsyncClient) -> None:
     """Test releasing a nonexistent reservation returns 404."""
     fake_id = str(uuid.uuid4())
     response = await client.post(f"/api/v1/reservations/{fake_id}/release")
@@ -299,7 +299,7 @@ async def test_release_nonexistent_reservation(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_expired_reservations_empty(client: AsyncClient):
+async def test_get_expired_reservations_empty(client: AsyncClient) -> None:
     """Test getting expired reservations when none exist."""
     response = await client.get("/api/v1/reservations/expired")
     assert response.status_code == 200
@@ -307,7 +307,7 @@ async def test_get_expired_reservations_empty(client: AsyncClient):
 
 
 @pytest.mark.asyncio 
-async def test_pagination_limits(client: AsyncClient, sample_location_data, sample_inventory_data):
+async def test_pagination_limits(client: AsyncClient, sample_location_data, sample_inventory_data) -> None:
     """Test pagination parameters work correctly."""
     # Setup: Create location and inventory
     location_response = await client.post("/api/v1/locations", json=sample_location_data)
@@ -317,7 +317,7 @@ async def test_pagination_limits(client: AsyncClient, sample_location_data, samp
     inventory_data = {
         **sample_inventory_data,
         "product_id": product_id,
-        "location_id": location_id
+        "location_id": location_id,
     }
     await client.post("/api/v1/inventory", json=inventory_data)
     
@@ -330,7 +330,7 @@ async def test_pagination_limits(client: AsyncClient, sample_location_data, samp
             "location_id": location_id,
             "quantity": 2,  # Small quantity to avoid exceeding available
             "order_id": order_id,
-            "expires_minutes": 60
+            "expires_minutes": 60,
         }
         
         response = await client.post("/api/v1/inventory/reserve", json=reserve_data)

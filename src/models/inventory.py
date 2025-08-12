@@ -2,19 +2,15 @@
 
 import uuid
 from datetime import datetime
-from decimal import Decimal
 from enum import StrEnum
-from typing import Any
 
 from sqlalchemy import (
-    BigInteger,
     Boolean,
     DateTime,
     Enum,
     ForeignKey,
     Index,
     Integer,
-    Numeric,
     String,
     Text,
 )

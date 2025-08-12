@@ -38,10 +38,10 @@ Used by load balancers and monitoring systems to determine service health.
                         "service": "inventory-management-service",
                         "version": "0.1.0",
                         "database": "connected",
-                    }
-                }
+                    },
+                },
             },
-        }
+        },
     },
     status_code=status.HTTP_200_OK,
     tags=["health"],
@@ -55,7 +55,7 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> dict[str, str]:
         await db.execute(text("SELECT 1"))
         database_status = "connected"
     except Exception as e:
-        logger.error("Database health check failed", error=str(e))
+        logger.exception("Database health check failed")
         database_status = "disconnected"
 
     return {
@@ -91,10 +91,10 @@ Used by Kubernetes readiness probes.
                         "service": "inventory-management-service",
                         "version": "0.1.0",
                         "checks": {
-                            "database": "ok"
+                            "database": "ok",
                         },
-                    }
-                }
+                    },
+                },
             },
         },
         503: {
@@ -106,10 +106,10 @@ Used by Kubernetes readiness probes.
                         "service": "inventory-management-service",
                         "version": "0.1.0",
                         "checks": {
-                            "database": "failed"
+                            "database": "failed",
                         },
-                    }
-                }
+                    },
+                },
             },
         },
     },
@@ -127,7 +127,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
         await db.execute(text("SELECT 1"))
         checks["database"] = "ok"
     except Exception as e:
-        logger.error("Database readiness check failed", error=str(e))
+        logger.exception("Database readiness check failed")
         checks["database"] = "failed"
         all_ready = False
 
@@ -168,10 +168,10 @@ Used by Kubernetes liveness probes.
                         "status": "alive",
                         "service": "inventory-management-service",
                         "version": "0.1.0",
-                    }
-                }
+                    },
+                },
             },
-        }
+        },
     },
     status_code=status.HTTP_200_OK,
     tags=["health"],

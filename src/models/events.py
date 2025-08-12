@@ -1,9 +1,8 @@
 """Internal event models for the Inventory Management Service."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -48,7 +47,7 @@ class BaseEvent(BaseModel):
     event_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     correlation_id: str
     source_service: ServiceName
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     version: str = Field(default="1.0")
 
 
@@ -59,9 +58,9 @@ class ReservationData(BaseModel):
     reservation_id: str
     product_id: str
     quantity: int
-    location_id: Optional[str] = None
-    order_id: Optional[str] = None
-    expires_at: Optional[str] = None
+    location_id: str | None = None
+    order_id: str | None = None
+    expires_at: str | None = None
 
 
 class InventoryReleaseData(BaseModel):
@@ -70,7 +69,7 @@ class InventoryReleaseData(BaseModel):
     reservation_id: str
     product_id: str
     quantity: int
-    location_id: Optional[str] = None
+    location_id: str | None = None
     reason: str
 
 
@@ -78,19 +77,19 @@ class InventoryAdjustmentData(BaseModel):
     """Data for inventory adjustment events."""
     
     product_id: str
-    location_id: Optional[str] = None
+    location_id: str | None = None
     old_quantity: int
     new_quantity: int
     adjustment_type: AdjustmentType
-    reason: Optional[str] = None
-    reference_number: Optional[str] = None
+    reason: str | None = None
+    reference_number: str | None = None
 
 
 class LowStockAlertData(BaseModel):
     """Data for low stock alert events."""
     
     product_id: str
-    location_id: Optional[str] = None
+    location_id: str | None = None
     current_quantity: int
     threshold: int
     alert_level: AlertLevel
@@ -100,12 +99,12 @@ class InventoryUpdateData(BaseModel):
     """Data for general inventory update events."""
     
     product_id: str
-    location_id: Optional[str] = None
+    location_id: str | None = None
     quantity: int
-    reserved_quantity: Optional[int] = None
-    available_quantity: Optional[int] = None
+    reserved_quantity: int | None = None
+    available_quantity: int | None = None
     update_type: UpdateType
-    source_event: Optional[str] = None
+    source_event: str | None = None
 
 
 # Event Models

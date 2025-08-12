@@ -2,12 +2,10 @@
 
 import uuid
 from datetime import datetime
-from enum import StrEnum
-from typing import Any
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from src.models.inventory import LocationType, ReservationStatus, AdjustmentType
+from src.models.inventory import AdjustmentType, LocationType, ReservationStatus
 
 
 # Request Models
@@ -48,7 +46,7 @@ class AdjustInventoryRequest(BaseModel):
     location_id: uuid.UUID = Field(..., description="Location where inventory is adjusted")
     quantity_change: int = Field(
         ..., 
-        description="Quantity change (positive to add, negative to remove)"
+        description="Quantity change (positive to add, negative to remove)",
     )
     adjustment_type: AdjustmentType = Field(..., description="Type of adjustment")
     reason: str | None = Field(None, description="Optional reason for adjustment")

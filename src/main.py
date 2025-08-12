@@ -7,21 +7,24 @@ from typing import Any
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from src.api.middleware.error_handling import (
     ErrorHandlingMiddleware,
     create_exception_handlers,
 )
 from src.api.middleware.metrics import setup_http_metrics_middleware
-from src.api.routes import health, inventory, reservations, locations
+from src.api.routes import health, inventory, locations, reservations
+from src.core.background_metrics import (
+    start_background_metrics,
+    stop_background_metrics,
+)
 from src.core.config import settings
 from src.core.database import close_db, init_db
+from src.core.events import close_event_service, get_event_service
 from src.core.logging import get_logger, setup_logging
+from src.core.metrics import service_registry
 from src.core.middleware import LoggingMiddleware
-from src.core.metrics import service_registry, get_metrics_collector
-from src.core.background_metrics import start_background_metrics, stop_background_metrics
-from src.core.events import get_event_service, close_event_service
 
 # Setup logging
 setup_logging(
@@ -34,7 +37,7 @@ logger = get_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """Application lifespan management."""
     # Startup
     logger.info("Starting Inventory Management Service", version=settings.app_version)
@@ -45,7 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await init_db()
             logger.info("Database initialized successfully")
         except Exception as e:
-            logger.error("Failed to initialize database", error=str(e))
+            logger.exception("Failed to initialize database")
             # In production, you might want to fail fast here
 
     # Start background metrics collection
@@ -53,7 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await start_background_metrics()
         logger.info("Background metrics collection started")
     except Exception as e:
-        logger.error("Failed to start background metrics", error=str(e))
+        logger.exception("Failed to start background metrics")
     
     # Initialize event service if enabled
     if settings.events_enabled:
@@ -61,7 +64,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await get_event_service()
             logger.info("Event service initialized")
         except Exception as e:
-            logger.error("Failed to initialize event service", error=str(e))
+            logger.exception("Failed to initialize event service")
 
     yield
 
@@ -73,7 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await stop_background_metrics()
         logger.info("Background metrics collection stopped")
     except Exception as e:
-        logger.error("Failed to stop background metrics", error=str(e))
+        logger.exception("Failed to stop background metrics")
     
     # Close event service
     if settings.events_enabled:
@@ -81,7 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             await close_event_service()
             logger.info("Event service closed")
         except Exception as e:
-            logger.error("Failed to close event service", error=str(e))
+            logger.exception("Failed to close event service")
         
     if settings.database_url:
         await close_db()
@@ -181,7 +184,7 @@ No rate limiting is currently implemented. This will be added in future versions
                         "type": "array",
                         "items": {"type": "object"},
                         "example": [
-                            {"field": "quantity", "message": "Quantity must be positive"}
+                            {"field": "quantity", "message": "Quantity must be positive"},
                         ],
                     },
                     "timestamp": {"type": "string", "format": "date-time"},
@@ -191,7 +194,7 @@ No rate limiting is currently implemented. This will be added in future versions
                         "example": "550e8400-e29b-41d4-a716-446655440000",
                     },
                 },
-            }
+            },
         },
     }
 
@@ -258,10 +261,10 @@ Useful for quick service identification and version checking.
                         "service": "inventory-management-service",
                         "version": "0.1.0",
                         "database": "connected",
-                    }
-                }
+                    },
+                },
             },
-        }
+        },
     },
     tags=["service-info"],
 )

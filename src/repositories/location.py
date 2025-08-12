@@ -6,8 +6,6 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from src.core.logging import get_logger
 from src.models.inventory import Location, LocationType

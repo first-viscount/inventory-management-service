@@ -1,8 +1,7 @@
 """Inventory management API routes."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.models.inventory import (
     AdjustInventoryRequest,
     CreateInventoryRequest,
-    CreateLocationRequest,
     InventoryOperationResponse,
     InventoryResponse,
     InventoryStatsResponse,
@@ -19,13 +17,18 @@ from src.api.models.inventory import (
     ReleaseInventoryRequest,
     ReservationResponse,
     ReserveInventoryRequest,
-    UpdateInventoryRequest,
-    UpdateLocationRequest,
 )
 from src.core.database import get_db
-from src.core.exceptions import BadRequestError, ConflictError, InsufficientStockError, NotFoundError
+from src.core.exceptions import (
+    BadRequestError,
+    ConflictError,
+    InsufficientStockError,
+    NotFoundError,
+)
 from src.core.logging import get_logger
-from src.models.inventory import AdjustmentType, LocationType, Reservation, ReservationStatus
+from src.models.inventory import (
+    ReservationStatus,
+)
 from src.repositories.inventory import InventoryRepository
 from src.repositories.location import LocationRepository
 from src.repositories.reservation import ReservationRepository
@@ -103,7 +106,7 @@ async def get_inventory(
                     created_at=inv.location.created_at,
                     updated_at=inv.location.updated_at,
                 ),
-            )
+            ),
         )
     
     return InventoryStatsResponse(
@@ -147,26 +150,26 @@ async def reserve_inventory(
     try:
         # Check if inventory exists
         inventory = await inventory_repo.get_by_product_and_location(
-            request.product_id, request.location_id
+            request.product_id, request.location_id,
         )
         if not inventory:
             raise NotFoundError(
-                f"Inventory not found for product {request.product_id} at location {request.location_id}"
+                f"Inventory not found for product {request.product_id} at location {request.location_id}",
             )
         
         # Reserve inventory (atomic operation)
         success = await inventory_repo.reserve_inventory(
-            request.product_id, request.location_id, request.quantity
+            request.product_id, request.location_id, request.quantity,
         )
         
         if not success:
             raise InsufficientStockError(
                 f"Insufficient stock available. Requested: {request.quantity}, "
-                f"Available: {inventory.quantity_available}"
+                f"Available: {inventory.quantity_available}",
             )
         
         # Create reservation record
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=request.expires_minutes)
+        expires_at = datetime.now(UTC) + timedelta(minutes=request.expires_minutes)
         reservation = await reservation_repo.create(
             inventory_id=inventory.id,
             product_id=request.product_id,
@@ -237,13 +240,12 @@ async def reserve_inventory(
         if isinstance(e, (NotFoundError, InsufficientStockError)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to reserve inventory",
             product_id=str(request.product_id),
             location_id=str(request.location_id),
             order_id=str(request.order_id),
             quantity=request.quantity,
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -296,12 +298,12 @@ async def release_inventory(
         
         if not matching_reservation:
             raise NotFoundError(
-                f"No matching active reservation found for order {request.order_id}"
+                f"No matching active reservation found for order {request.order_id}",
             )
         
         # Release inventory (atomic operation)
         success = await inventory_repo.release_inventory(
-            request.product_id, request.location_id, request.quantity
+            request.product_id, request.location_id, request.quantity,
         )
         
         if not success:
@@ -312,7 +314,7 @@ async def release_inventory(
         
         # Get updated inventory
         inventory = await inventory_repo.get_by_product_and_location(
-            request.product_id, request.location_id
+            request.product_id, request.location_id,
         )
         
         # Build response
@@ -361,13 +363,12 @@ async def release_inventory(
         if isinstance(e, (NotFoundError, ConflictError)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to release inventory",
             product_id=str(request.product_id),
             location_id=str(request.location_id),
             order_id=str(request.order_id),
             quantity=request.quantity,
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -406,11 +407,11 @@ async def adjust_inventory(
     try:
         # Check if inventory exists
         inventory = await inventory_repo.get_by_product_and_location(
-            request.product_id, request.location_id
+            request.product_id, request.location_id,
         )
         if not inventory:
             raise NotFoundError(
-                f"Inventory not found for product {request.product_id} at location {request.location_id}"
+                f"Inventory not found for product {request.product_id} at location {request.location_id}",
             )
         
         # Perform adjustment
@@ -427,13 +428,12 @@ async def adjust_inventory(
             if request.quantity_change < 0:
                 raise BadRequestError(
                     f"Adjustment would result in negative inventory. "
-                    f"Current: {inventory.quantity_available}, Adjustment: {request.quantity_change}"
+                    f"Current: {inventory.quantity_available}, Adjustment: {request.quantity_change}",
                 )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to adjust inventory",
-                )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to adjust inventory",
+            )
         
         # Get updated inventory
         await db.refresh(inventory)
@@ -486,13 +486,12 @@ async def adjust_inventory(
         if isinstance(e, (NotFoundError, BadRequestError)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to adjust inventory",
             product_id=str(request.product_id),
             location_id=str(request.location_id),
             adjustment=request.quantity_change,
             type=request.adjustment_type.value,
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -525,7 +524,7 @@ async def get_low_stock(
     inventory_repo = InventoryRepository(db)
     
     low_stock_items = await inventory_repo.get_low_stock_items(
-        location_id=location_id, limit=limit
+        location_id=location_id, limit=limit,
     )
     
     response_items = []
@@ -548,7 +547,7 @@ async def get_low_stock(
                 reorder_point=item.reorder_point,
                 reorder_quantity=item.reorder_quantity,
                 shortage=shortage,
-            )
+            ),
         )
     
     # Sort by shortage (most critical first)
@@ -598,11 +597,11 @@ async def create_inventory(
         
         # Check if inventory already exists
         existing = await inventory_repo.get_by_product_and_location(
-            request.product_id, request.location_id
+            request.product_id, request.location_id,
         )
         if existing:
             raise ConflictError(
-                f"Inventory already exists for product {request.product_id} at location {request.location_id}"
+                f"Inventory already exists for product {request.product_id} at location {request.location_id}",
             )
         
         # Create inventory
@@ -653,11 +652,10 @@ async def create_inventory(
         if isinstance(e, (NotFoundError, ConflictError)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to create inventory record",
             product_id=str(request.product_id),
             location_id=str(request.location_id),
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

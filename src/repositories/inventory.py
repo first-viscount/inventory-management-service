@@ -3,21 +3,16 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import and_, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.core.logging import get_logger
 from src.models.inventory import (
-    Inventory,
-    Location,
-    Reservation,
-    InventoryAdjustment,
-    ReservationStatus,
     AdjustmentType,
+    Inventory,
+    InventoryAdjustment,
 )
 from src.repositories.base import BaseRepository
 
@@ -46,7 +41,7 @@ class InventoryRepository(BaseRepository[Inventory]):
         return result.scalar_one_or_none()
 
     async def get_by_product_and_location(
-        self, product_id: uuid.UUID, location_id: uuid.UUID
+        self, product_id: uuid.UUID, location_id: uuid.UUID,
     ) -> Inventory | None:
         """Get inventory by product and location."""
         stmt = (
@@ -56,7 +51,7 @@ class InventoryRepository(BaseRepository[Inventory]):
                 and_(
                     Inventory.product_id == product_id,
                     Inventory.location_id == location_id,
-                )
+                ),
             )
         )
         result = await self.session.execute(stmt)
@@ -114,7 +109,7 @@ class InventoryRepository(BaseRepository[Inventory]):
         return list(result.scalars().all())
 
     async def get_low_stock_items(
-        self, location_id: uuid.UUID | None = None, limit: int = 100
+        self, location_id: uuid.UUID | None = None, limit: int = 100,
     ) -> list[Inventory]:
         """Get items with low stock (below reorder point)."""
         stmt = (
@@ -132,7 +127,7 @@ class InventoryRepository(BaseRepository[Inventory]):
         return list(result.scalars().all())
 
     async def reserve_inventory(
-        self, product_id: uuid.UUID, location_id: uuid.UUID, quantity: int
+        self, product_id: uuid.UUID, location_id: uuid.UUID, quantity: int,
     ) -> bool:
         """Reserve inventory quantity (atomic operation)."""
         try:
@@ -143,7 +138,7 @@ class InventoryRepository(BaseRepository[Inventory]):
                     and_(
                         Inventory.product_id == product_id,
                         Inventory.location_id == location_id,
-                    )
+                    ),
                 )
                 .with_for_update()
             )
@@ -175,17 +170,16 @@ class InventoryRepository(BaseRepository[Inventory]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to reserve inventory",
                 product_id=str(product_id),
                 location_id=str(location_id),
                 quantity=quantity,
-                error=str(e),
             )
             return False
 
     async def release_inventory(
-        self, product_id: uuid.UUID, location_id: uuid.UUID, quantity: int
+        self, product_id: uuid.UUID, location_id: uuid.UUID, quantity: int,
     ) -> bool:
         """Release reserved inventory quantity (atomic operation)."""
         try:
@@ -196,7 +190,7 @@ class InventoryRepository(BaseRepository[Inventory]):
                     and_(
                         Inventory.product_id == product_id,
                         Inventory.location_id == location_id,
-                    )
+                    ),
                 )
                 .with_for_update()
             )
@@ -228,12 +222,11 @@ class InventoryRepository(BaseRepository[Inventory]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to release inventory",
                 product_id=str(product_id),
                 location_id=str(location_id),
                 quantity=quantity,
-                error=str(e),
             )
             return False
 
@@ -255,7 +248,7 @@ class InventoryRepository(BaseRepository[Inventory]):
                     and_(
                         Inventory.product_id == product_id,
                         Inventory.location_id == location_id,
-                    )
+                    ),
                 )
                 .with_for_update()
             )
@@ -309,12 +302,11 @@ class InventoryRepository(BaseRepository[Inventory]):
             return True
         
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Failed to adjust inventory",
                 product_id=str(product_id),
                 location_id=str(location_id),
                 adjustment=quantity_change,
                 type=adjustment_type.value,
-                error=str(e),
             )
             return False

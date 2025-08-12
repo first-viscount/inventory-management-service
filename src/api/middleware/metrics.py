@@ -1,13 +1,13 @@
 """HTTP metrics middleware for Prometheus monitoring."""
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.core.logging import get_logger
-from src.core.metrics import http_requests_total, http_request_duration_seconds
+from src.core.metrics import http_request_duration_seconds, http_requests_total
 
 logger = get_logger(__name__)
 
@@ -31,11 +31,10 @@ class HTTPMetricsMiddleware(BaseHTTPMiddleware):
             status_code = str(response.status_code)
             return response
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "Request processing error",
                 method=method,
                 endpoint=endpoint,
-                error=str(e),
             )
             status_code = "500"
             raise
@@ -45,12 +44,12 @@ class HTTPMetricsMiddleware(BaseHTTPMiddleware):
             
             # Record request count
             http_requests_total.labels(
-                method=method, endpoint=endpoint, status_code=status_code
+                method=method, endpoint=endpoint, status_code=status_code,
             ).inc()
             
             # Record request duration
             http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(
-                duration
+                duration,
             )
             
             # Log slow requests
@@ -79,14 +78,14 @@ class HTTPMetricsMiddleware(BaseHTTPMiddleware):
         
         # Replace UUIDs with {id}
         path = re.sub(
-            r'/[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}',
-            '/{id}',
+            r"/[a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12}",
+            "/{id}",
             path,
-            flags=re.IGNORECASE
+            flags=re.IGNORECASE,
         )
         
         # Replace numeric IDs with {id}
-        path = re.sub(r'/\d+', '/{id}', path)
+        path = re.sub(r"/\d+", "/{id}", path)
         
         # Limit to prevent cardinality explosion
         if len(path) > 100:

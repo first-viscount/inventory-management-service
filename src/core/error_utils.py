@@ -2,9 +2,16 @@
 
 from typing import Any
 
+# Error message constants to fix TRY003 violations
+NOT_FOUND_MSG = "{resource} with ID '{identifier}' not found"
+DUPLICATE_RESOURCE_MSG = "Resource already exists"
+INVALID_REFERENCE_MSG = "Referenced resource does not exist"
+DATABASE_CONNECTION_MSG = "Database connection error"
+DATABASE_OPERATION_MSG = "Database operation failed"
+
 
 def raise_not_found(
-    resource: str, identifier: Any, context: dict[str, Any] | None = None
+    resource: str, identifier: Any, context: dict[str, Any] | None = None,
 ) -> None:
     """Raise a standardized not found error.
 
@@ -16,7 +23,7 @@ def raise_not_found(
     from src.core.exceptions import NotFoundError
 
     raise NotFoundError(
-        f"{resource.capitalize()} with ID '{identifier}' not found",
+        NOT_FOUND_MSG.format(resource=resource.capitalize(), identifier=identifier),
         error_code=f"{resource.upper()}_NOT_FOUND",
         context=context or {},
     )
@@ -50,7 +57,7 @@ def raise_validation_error(
 
 
 def raise_conflict(
-    resource: str, message: str, context: dict[str, Any] | None = None
+    resource: str, message: str, context: dict[str, Any] | None = None,
 ) -> None:
     """Raise a standardized conflict error.
 
@@ -80,26 +87,25 @@ def handle_database_error(exc: Exception) -> None:
     error_message = str(exc).lower()
 
     if "duplicate" in error_message or "unique constraint" in error_message:
-        raise ConflictError("Resource already exists", error_code="DUPLICATE_RESOURCE")
-    elif "foreign key" in error_message:
+        raise ConflictError(DUPLICATE_RESOURCE_MSG, error_code="DUPLICATE_RESOURCE")
+    if "foreign key" in error_message:
         from src.core.exceptions import ValidationError
 
         raise ValidationError(
-            "Referenced resource does not exist", error_code="INVALID_REFERENCE"
+            INVALID_REFERENCE_MSG, error_code="INVALID_REFERENCE",
         )
-    elif "connection" in error_message or "timeout" in error_message:
+    if "connection" in error_message or "timeout" in error_message:
         from src.core.exceptions import ServiceUnavailableError
 
         raise ServiceUnavailableError(
-            "Database connection error", error_code="DATABASE_UNAVAILABLE"
+            DATABASE_CONNECTION_MSG, error_code="DATABASE_UNAVAILABLE",
         )
-    else:
-        # Generic database error
-        raise InternalServerError(
-            "Database operation failed",
-            error_code="DATABASE_ERROR",
-            context={"original_error": type(exc).__name__},
-        )
+    # Generic database error
+    raise InternalServerError(
+        DATABASE_OPERATION_MSG,
+        error_code="DATABASE_ERROR",
+        context={"original_error": type(exc).__name__},
+    )
 
 
 def create_error_response_examples() -> dict[int, dict[str, Any]]:
@@ -120,8 +126,8 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services",
                         "status_code": 400,
-                    }
-                }
+                    },
+                },
             },
         },
         401: {
@@ -135,8 +141,8 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services",
                         "status_code": 401,
-                    }
-                }
+                    },
+                },
             },
         },
         403: {
@@ -150,8 +156,8 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services",
                         "status_code": 403,
-                    }
-                }
+                    },
+                },
             },
         },
         404: {
@@ -165,8 +171,8 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services/service-123",
                         "status_code": 404,
-                    }
-                }
+                    },
+                },
             },
         },
         422: {
@@ -181,14 +187,14 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                                 "field": "name",
                                 "message": "Field required",
                                 "code": "missing",
-                            }
+                            },
                         ],
                         "correlation_id": "123e4567-e89b-12d3-a456-426614174000",
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services",
                         "status_code": 422,
-                    }
-                }
+                    },
+                },
             },
         },
         500: {
@@ -202,8 +208,8 @@ def create_error_response_examples() -> dict[int, dict[str, Any]]:
                         "timestamp": "2024-01-01T12:00:00Z",
                         "path": "/api/v1/services",
                         "status_code": 500,
-                    }
-                }
+                    },
+                },
             },
         },
     }

@@ -22,20 +22,20 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="General error type or title")
     message: str = Field(..., description="Human-readable error message")
     details: list[ErrorDetail] | None = Field(
-        None, description="Detailed error information"
+        None, description="Detailed error information",
     )
     correlation_id: str | None = Field(
-        None, description="Request correlation ID for tracing"
+        None, description="Request correlation ID for tracing",
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(UTC), description="Error timestamp"
+        default_factory=lambda: datetime.now(UTC), description="Error timestamp",
     )
     path: str | None = Field(None, description="Request path that caused the error")
     status_code: int = Field(..., description="HTTP status code")
 
     # Development-only fields
     debug_info: dict[str, Any] | None = Field(
-        None, description="Debug information (dev only)"
+        None, description="Debug information (dev only)",
     )
     traceback: list[str] | None = Field(None, description="Stack trace (dev only)")
 
@@ -51,5 +51,5 @@ class ValidationErrorDetail(ErrorDetail):
     # field is inherited from ErrorDetail, but we document that it's expected to be non-None for validation errors
     value: Any | None = Field(None, description="The invalid value (sanitized)")
     constraint: str | None = Field(
-        None, description="Validation constraint that failed"
+        None, description="Validation constraint that failed",
     )

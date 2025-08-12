@@ -1,7 +1,6 @@
 """Reservation management API routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -69,7 +68,7 @@ async def list_reservations(
                 status=reservation.status,
                 created_at=reservation.created_at,
                 updated_at=reservation.updated_at,
-            )
+            ),
         )
     
     logger.info(
@@ -182,10 +181,9 @@ async def complete_reservation(
         if isinstance(e, NotFoundError):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to complete reservation",
             reservation_id=str(reservation_id),
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -228,7 +226,7 @@ async def release_reservation(
         reservation = await reservation_repo.get(reservation_id)
         if not reservation or reservation.status != ReservationStatus.ACTIVE:
             raise NotFoundError(
-                f"Active reservation {reservation_id} not found or cannot be released"
+                f"Active reservation {reservation_id} not found or cannot be released",
             )
         
         # Release inventory back to available stock
@@ -276,10 +274,9 @@ async def release_reservation(
         if isinstance(e, (NotFoundError, HTTPException)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to release reservation",
             reservation_id=str(reservation_id),
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -326,7 +323,7 @@ async def get_expired_reservations(
                 status=reservation.status,
                 created_at=reservation.created_at,
                 updated_at=reservation.updated_at,
-            )
+            ),
         )
     
     logger.info(

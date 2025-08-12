@@ -1,7 +1,6 @@
 """Location management API routes."""
 
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,7 +65,7 @@ async def list_locations(
                 active=location.active,
                 created_at=location.created_at,
                 updated_at=location.updated_at,
-            )
+            ),
         )
     
     logger.info(
@@ -181,11 +180,10 @@ async def create_location(
         if isinstance(e, ConflictError):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to create location",
             name=request.name,
             type=request.type.value,
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -288,10 +286,9 @@ async def update_location(
         if isinstance(e, (NotFoundError, ConflictError, HTTPException)):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to update location",
             location_id=str(location_id),
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -344,10 +341,9 @@ async def deactivate_location(
         if isinstance(e, NotFoundError):
             raise
         
-        logger.error(
+        logger.exception(
             "Failed to deactivate location",
             location_id=str(location_id),
-            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -394,7 +390,7 @@ async def get_locations_by_type(
                 active=location.active,
                 created_at=location.created_at,
                 updated_at=location.updated_at,
-            )
+            ),
         )
     
     logger.info(
